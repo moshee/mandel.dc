@@ -16,8 +16,10 @@
 f
 
 # ...we're storing the stack values into registers here.
-# w = width, h = height, m = max iters
-swsh1-sm
+# w = width, h = height, m = max iters (subtract one because 0-255 output)
+sw
+sh
+1- sm
 
 9k # set to the max precision we can get with a single digit
 
@@ -26,45 +28,48 @@ swsh1-sm
 [q]sQ
 
 # Begin looping through h rows of w pixels wide each.
+# All of these loops are analogous to do { ... } while (...) loops. It's three
+# characters shorter for each loop that way. Just have to keep the "at least
+# one iteration" behavior in mind.
 # q = row index
 0sq
 [
-	# Store the x pixel index on the stack instead of a register, because we
-	# can keep it local. Won't work for the row index.
-	0
-	[
-		# Dupe the x index for the next operation and calculate the scaled
-		# Mandelbrot plot point on the X axis, between -3 and 1
-		# a = x0
-		dlw/  4* 3-   sa
-		
-		# Calculate the scaled Y axis point, between -1.5 and 1.5
-		# b = y0
-		lqlh/ 3* 1.5- sb
-		
-		# Begin the escape time iteration. Store iteration i on the stack.
-		# x = 0, y = 0, stack = 0
-		0ddsxsy
-		[
-			lxd* lyd*+ 4!>Q     # Break macro I if x^2 + y^2 > 4
-			lxdd* lyd*- la+ sx  # x = x^2 - y^2 + x0; old x on stack
-			2ly** lb+ sy        # y = 2xy + y0
-			1+dlm>I             # i++; loop I again if i < m
-		]dsIx                   # Assign and execute macro I: escape time loop
-		
-		# Now we are done iterating. Print out the binary representation of i.
-		P
-		
-		# Continue along this X-row of pixels if x pixel index < w.
-		1+dlw>X
-	]dsXx # Assign and execute macro X: row pixels loop
-	
-	# By now we are done with one row of pixels.
-	# Clear the x pixel index so that the stack doesn't just grow and grow.
-	# Using c to clear the entire stack is safe here because nothing else needs
-	# to be stored on the stack at this point.
-	c
-	
-	# Continue onto the next row if q < h.
-	lq1+dsqlh>Y
+    # Store the x pixel index on the stack instead of a register, because we
+    # can keep it local. Won't work for the row index.
+    0
+    [
+        # Dupe the x index for the next operation and calculate the scaled
+        # Mandelbrot plot point on the X axis, between -3 and 1
+        # a = x0
+        dlw/  4* 3-   sa
+        
+        # Calculate the scaled Y axis point, between -1.5 and 1.5
+        # b = y0
+        lqlh/ 3* 1.5- sb
+        
+        # Begin the escape time iteration. Store iteration i on the stack.
+        # x = 0, y = 0, stack = 0
+        0ddsxsy
+        [
+            lxd* lyd*+ 4!>Q     # Break macro I if x^2 + y^2 > 4
+            lxdd* lyd*- la+ sx  # x = x^2 - y^2 + x0; old x on stack
+            2ly** lb+ sy        # y = 2xy + y0
+            1+dlm>I             # i++; loop I again if i < m
+        ]dsIx                   # Assign and execute macro I: escape time loop
+        
+        # Now we are done iterating. Print out the binary representation of i.
+        P
+        
+        # p++; continue along this X-row of pixels if x pixel index < w.
+        1+dlw>X
+    ]dsXx # Assign and execute macro X: row pixels loop
+    
+    # By now we are done with one row of pixels.
+    # Clear the x pixel index so that the stack doesn't just grow and grow.
+    # Using c to clear the entire stack is safe here because nothing else needs
+    # to be stored on the stack at this point.
+    c
+    
+    # q++; continue onto the next row if q < h.
+    lq1+dsqlh>Y
 ]dsYx # Assign and execute macro Y: image rows loop
