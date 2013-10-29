@@ -16,10 +16,8 @@
 f
 
 # ...we're storing the stack values into registers here.
-# w = width, h = height, m = max iters (subtract one because 0-255 output)
-sw
-sh
-1- sm
+# w = width, h = height, m = max iters
+sw sh sm
 
 9k # set to the max precision we can get with a single digit
 
@@ -58,7 +56,9 @@ sh
         ]dsIx                   # Assign and execute macro I: escape time loop
         
         # Now we are done iterating. Print out the binary representation of i.
-        P
+        # Subtract 1 here because i has already had 1 added to it; the values
+        # of i here could be in 1..256 (0x01..0x100). We want 0x00..0xff.
+        1- P
         
         # p++; continue along this X-row of pixels if x pixel index < w.
         1+dlw>X
