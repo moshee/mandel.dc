@@ -8,6 +8,6 @@ Here, 32 is the max iterations, 256 is the pixel height, and 384 is the pixel wi
 
 ![It'll look like this.](mandelbrot.png)
 
-It might take a while if you use big numbers.
+It might take a while if you use big numbers. 128 1024 1536 took about 15 minutes on my i5 3750K.
 
 Maximum iteration count is 255.
