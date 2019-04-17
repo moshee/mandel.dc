@@ -4,8 +4,8 @@
 # (0..255), height, and width, separated by spaces.
 ?
 
-# Print out the PGM format magic
-[P5]P
+# Print out the PPM binary mode format magic
+[P6]P
 
 # The numbers were entered backwards because we use f (show stack) to print
 # the rest of the PGM header, separated by whitespace (f uses newlines).
@@ -24,6 +24,41 @@ sw sh sm
 # A macro to break a loop (used only once but the compare-and-execute
 # instruction only takes macros)
 [q]sQ
+
+# Macros U and V implement the following:
+#
+# func f(i, width int) color.Color {
+# 	x := float64(i) / float64(width)
+# 
+# 	R := g(x, 11)
+# 	G := g(x, 8)
+# 	B := g(x, 5)
+# 
+# 	return color.RGBA{R, G, B, 255}
+# }
+# 
+# func g(x, off float64) uint8 {
+# 	y := (1 / (1 + math.Exp(-20*x+off))) -
+# 		(1 / (1 + math.Exp(-20*x+off+10)))
+# 	return uint8(y * 255.0)
+# }
+#
+# This creates a color palette based on overlapping, smooth R, G, and B
+# curves based on exponential functions.
+
+# Create macro U to perform common ops in color generator.
+[20* Lo r- 3r^ 1+ 1r/] sU
+
+# Create a macro V that creates a single color channel and places it on the stack.
+# Push the x-value and then the offset value before calling.
+[
+	# store starting and ending offsets
+	dSo 8- So
+	d
+	lUx r lUx
+	-
+	lm*
+] sV
 
 # Begin looping through h rows of w pixels wide each.
 # All of these loops are analogous to do { ... } while (...) loops. It's three
@@ -55,10 +90,15 @@ sw sh sm
             1+dlm>I             # i++; loop I again if i < m
         ]dsIx                   # Assign and execute macro I: escape time loop
         
-        # Now we are done iterating. Print out the binary representation of i.
-        # Subtract 1 here because i has already had 1 added to it; the values
-        # of i here could be in 1..256 (0x01..0x100). We want 0x00..0xff.
-        1- P
+        # Now we are done iterating. Output the color bytes.
+		# Convert to fraction of iteration count to feed into color macro.
+        lm/
+		
+		# Calculate each color channel value based on the scale and print out
+		# its binary representation.
+		d 17 lVx P # R
+		d 14 lVx P # G
+		  11 lVx P # B
         
         # p++; continue along this X-row of pixels if x pixel index < w.
         1+dlw>X
